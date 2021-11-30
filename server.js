@@ -4,6 +4,9 @@ const fs = require("fs");
 require("dotenv").config();
 const port = process.env.PORT;
 
+const sg_mail = require( "@sendgrid/mail" );
+sg_mail.setApiKey(process.env.SENDGRIDMAIL_API_KEY);
+
 class Application {
   /**
    * express application
@@ -140,6 +143,24 @@ class Application {
     });
 
     // - send an alert to email using sendgrid, and call next error handler
+    this.#app.use((err, req, res, next) => {
+      const msg = {
+        to: "caleb.baraka@thejitu.com", 
+        from: "lucky.tsuma@thejitu.com", 
+        subject: "ERROR",
+        text: "Sorry for any inconviniences, an  error occured.",
+        html: "<strong>We are working on restoring everything to normal.</strong>",
+      };
+      sg_mail
+        .send(msg)
+        .then(() => {
+          console.log("Email was sent successfully");
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+      next(err);
+    });
 
     // not found error
     this.#app.use((err, req, res, next) => {
